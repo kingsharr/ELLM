@@ -1,240 +1,101 @@
-import Image from "next/image";
+// app/(main)/page.tsx
 import { FaRecycle, FaRobot, FaChartLine, FaGamepad, FaLeaf } from "react-icons/fa";
-import Head from "next/head";
-import Chatbot from "../components/Chatbot";
+import Link from "next/link";
 
 export default function Home() {
   return (
     <>
-      <Head>
-        <title>SmartWaste ELLM | AI-Powered Waste Management</title>
-        <meta name="description" content="SmartWaste ELLM combines AI and LLM technology to revolutionize waste management in Malaysia" />
-      </Head>
-      
-      <div className="min-h-screen bg-gradient-to-b from-green-50 to-white dark:from-green-900 dark:to-gray-900">
-        {/* Navigation */}
-        <nav className="flex justify-between items-center p-6 max-w-6xl mx-auto">
-          <div className="flex items-center space-x-2">
-            <FaRecycle className="text-3xl text-green-600 dark:text-green-400" />
-            <span className="text-xl font-bold text-green-800 dark:text-green-200">SmartWaste ELLM</span>
-          </div>
-          <div className="hidden md:flex space-x-8">
-            <a href="#features" className="text-green-700 dark:text-green-300 hover:text-green-600 dark:hover:text-green-200 font-medium">Features</a>
-            <a href="#technology" className="text-green-700 dark:text-green-300 hover:text-green-600 dark:hover:text-green-200 font-medium">Technology</a>
-            <a href="#impact" className="text-green-700 dark:text-green-300 hover:text-green-600 dark:hover:text-green-200 font-medium">Impact</a>
-            <a href="#contact" className="bg-green-600 text-white px-4 py-2 rounded-full hover:bg-green-700 transition">Learn More</a>
-          </div>
-        </nav>
+      {/* Hero Section */}
+      <section className="max-w-4xl mx-auto px-6 py-32 text-center">
+        <h1 className="text-4xl md:text-5xl font-bold text-gray-800 dark:text-white leading-tight mb-6">
+          Transforming Waste Management with <span className="text-green-600 dark:text-green-400">AI & LLM Technology</span>
+        </h1>
+        <p className="text-xl text-gray-600 dark:text-gray-300 mb-8 max-w-3xl mx-auto">
+          SmartWaste ELLM leverages cutting-edge artificial intelligence and large language models to revolutionize how Malaysia handles waste.
+        </p>
+        <div className="flex justify-center gap-4">
+          <Link 
+            href="/detection" 
+            className="bg-green-600 text-white px-6 py-3 rounded-full hover:bg-green-700 transition font-medium"
+          >
+            Try Waste Detection
+          </Link>
+          <Link 
+            href="/chatbot" 
+            className="border border-green-600 text-green-600 dark:text-green-300 px-6 py-3 rounded-full hover:bg-green-50 dark:hover:bg-green-900 transition font-medium"
+          >
+            Ask Our Chatbot
+          </Link>
+        </div>
+      </section>
 
-        {/* Hero Section - Centered */}
-        <section className="max-w-4xl mx-auto px-6 py-32 text-center">
-          <h1 className="text-4xl md:text-5xl font-bold text-gray-800 dark:text-white leading-tight mb-6">
-            Transforming Waste Management with <span className="text-green-600 dark:text-green-400">AI & LLM Technology</span>
-          </h1>
-          <p className="text-xl text-gray-600 dark:text-gray-300 mb-8 max-w-3xl mx-auto">
-            SmartWaste ELLM leverages cutting-edge artificial intelligence and large language models to revolutionize how Malaysia handles waste - from intelligent sorting to optimized collection systems.
-          </p>
-          <div className="flex justify-center gap-4">
-            <a href="#features" className="border border-green-600 text-green-600 dark:text-green-300 px-6 py-3 rounded-full hover:bg-green-50 dark:hover:bg-green-900 transition font-medium">
-              Explore Features
-            </a>
-          </div>
-        </section>
+      {/* Features Grid */}
+      <section className="max-w-6xl mx-auto px-6 pb-16">
+        <div className="grid md:grid-cols-3 gap-8">
+          {[
+            {
+              icon: <FaRobot className="text-4xl text-green-600" />,
+              title: "AI Waste Scanner",
+              desc: "Instant classification through your camera",
+              link: "/detection"
+            },
+            {
+              icon: <FaRecycle className="text-4xl text-green-600" />,
+              title: "LLM Chatbot",
+              desc: "Get answers about recycling rules",
+              link: "/chatbot"
+            },
+            {
+              icon: <FaChartLine className="text-4xl text-green-600" />,
+              title: "Predictive Analytics",
+              desc: "Optimized collection routes",
+              link: "/prediction"
+            },
+            {
+              icon: <FaGamepad className="text-4xl text-green-600" />,
+              title: "Gamified Experience",
+              desc: "Earn rewards for recycling",
+              link: "/game"
+            },
+            {
+              icon: <FaLeaf className="text-4xl text-green-600" />,
+              title: "Environmental Impact",
+              desc: "Track your positive contribution",
+              link: "/profile"
+            }
+          ].map((feature, index) => (
+            <Link
+              key={index}
+              href={feature.link}
+              className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-md hover:shadow-lg transition text-center"
+            >
+              <div className="flex justify-center mb-4">
+                {feature.icon}
+              </div>
+              <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
+              <p className="text-gray-600 dark:text-gray-300">{feature.desc}</p>
+            </Link>
+          ))}
+        </div>
+      </section>
 
-        {/* Problem Section */}
-        <section className="bg-gray-100 dark:bg-gray-800 py-16">
-          <div className="max-w-6xl mx-auto px-6">
-            <h2 className="text-3xl font-bold text-center text-gray-800 dark:text-white mb-12">Malaysia's Waste Management Challenges</h2>
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-              {[
-                { icon: "🗑️", title: "High Waste Generation", desc: "Growing urban population producing more waste" },
-                { icon: "♻️", title: "Low Recycling Rates", desc: "Only 30% of waste gets recycled" },
-                { icon: "❓", title: "Poor Sorting Knowledge", desc: "Public unaware of proper waste segregation" },
-                { icon: "🏗️", title: "Strained Landfills", desc: "Limited space for increasing waste volumes" }
-              ].map((item, index) => (
-                <div key={index} className="bg-white dark:bg-gray-700 p-6 rounded-xl shadow-md">
-                  <span className="text-3xl">{item.icon}</span>
-                  <h3 className="text-xl font-semibold mt-4 mb-2 text-gray-800 dark:text-white">{item.title}</h3>
-                  <p className="text-gray-600 dark:text-gray-300">{item.desc}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* Features Section */}
-        <section id="features" className="py-16 max-w-6xl mx-auto px-6">
-          <h2 className="text-3xl font-bold text-center text-gray-800 dark:text-white mb-12">Our Smart Solution</h2>
-          <div className="grid md:grid-cols-2 gap-12">
-            <div className="space-y-8">
-              {[
-                {
-                  icon: <FaRobot className="text-3xl text-green-600 dark:text-green-400" />,
-                  title: "AI Waste Scanner",
-                  desc: "Classify waste items through your phone's camera with our advanced image recognition",
-                },
-                {
-                  icon: <FaChartLine className="text-3xl text-green-600 dark:text-green-400" />,
-                  title: "Predictive Analytics",
-                  desc: "Optimized waste collection routes based on historical data and fill predictions",
-                },
-              ].map((feature, index) => (
-                <div key={index} className="flex gap-4">
-                  <div className="flex-shrink-0">{feature.icon}</div>
-                  <div>
-                    <h3 className="text-xl font-semibold text-gray-800 dark:text-white">{feature.title}</h3>
-                    <p className="text-gray-600 dark:text-gray-300 mt-2">{feature.desc}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="space-y-8">
-              {[
-                {
-                  icon: <FaRecycle className="text-3xl text-green-600 dark:text-green-400" />,
-                  title: "LLM Chatbot",
-                  desc: "Get instant answers about recycling rules and waste management practices",
-                  button: (
-                    <a
-                      href="/chatbot"
-                      className="inline-block px-6 py-3 bg-green-600 text-white rounded-full hover:bg-green-700 transition mt-4"
-                    >
-                      Go to Chatbot
-                    </a>
-                  ),
-                },
-                {
-                  icon: <FaGamepad className="text-3xl text-green-600 dark:text-green-400" />,
-                  title: "Gamified Experience",
-                  desc: "Earn points and badges for proper waste sorting and recycling",
-                },
-              ].map((feature, index) => (
-                <div key={index} className="flex gap-4">
-                  <div className="flex-shrink-0">{feature.icon}</div>
-                  <div>
-                    <h3 className="text-xl font-semibold text-gray-800 dark:text-white">{feature.title}</h3>
-                    <p className="text-gray-600 dark:text-gray-300 mt-2">{feature.desc}</p>
-                    {feature.button && feature.button}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* Technology Section */}
-        <section id="technology" className="bg-green-600 text-white py-16">
-          <div className="max-w-6xl mx-auto px-6">
-            <h2 className="text-3xl font-bold text-center mb-12">Advanced Technology Stack</h2>
-            <div className="grid md:grid-cols-3 gap-8">
-              {[
-                { 
-                  title: "Computer Vision", 
-                  desc: "Real-time waste item detection and classification using CNN models" 
-                },
-                { 
-                  title: "LLM Integration", 
-                  desc: "Natural language interface for recycling education powered by OpenAI" 
-                },
-                { 
-                  title: "Predictive ML", 
-                  desc: "Forecasting bin fill levels and optimal collection timing" 
-                }
-              ].map((tech, index) => (
-                <div key={index} className="bg-green-700 p-6 rounded-lg">
-                  <h3 className="text-xl font-semibold mb-3">{tech.title}</h3>
-                  <p>{tech.desc}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* Impact Section */}
-        <section id="impact" className="py-16 max-w-6xl mx-auto px-6">
-          <h2 className="text-3xl font-bold text-center text-gray-800 dark:text-white mb-12">Our Impact</h2>
-          <div className="grid md:grid-cols-3 gap-8">
+      {/* Stats Section */}
+      <section className="bg-green-600 text-white py-16">
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="grid md:grid-cols-3 gap-8 text-center">
             {[
-              { 
-                icon: <FaLeaf className="text-3xl text-green-600 dark:text-green-400" />,
-                title: "Environmental", 
-                desc: "Reduced landfill stress and improved recycling rates" 
-              },
-              { 
-                icon: "👥",
-                title: "Social", 
-                desc: "Public education and sustainable behavior change" 
-              },
-              { 
-                icon: "💰",
-                title: "Operational", 
-                desc: "Cost savings for local councils through efficient collection" 
-              }
-            ].map((impact, index) => (
-              <div key={index} className="bg-white dark:bg-gray-700 p-6 rounded-xl shadow-md text-center">
-                <div className="flex justify-center">
-                  {impact.icon}
-                </div>
-                <h3 className="text-xl font-semibold mt-4 mb-2 text-gray-800 dark:text-white">{impact.title}</h3>
-                <p className="text-gray-600 dark:text-gray-300">{impact.desc}</p>
+              { value: "30%+", label: "Recycling Rate Improvement" },
+              { value: "50%", label: "Collection Cost Reduction" },
+              { value: "10K+", label: "Users Educated" }
+            ].map((stat, index) => (
+              <div key={index}>
+                <p className="text-5xl font-bold mb-2">{stat.value}</p>
+                <p className="text-lg">{stat.label}</p>
               </div>
             ))}
           </div>
-        </section>
-
-        {/* CTA Section */}
-        <section id="contact" className="bg-gray-100 dark:bg-gray-800 py-16">
-          <div className="max-w-4xl mx-auto px-6 text-center">
-            <h2 className="text-3xl font-bold text-gray-800 dark:text-white mb-6">Ready to revolutionize waste management?</h2>
-            <p className="text-xl text-gray-600 dark:text-gray-300 mb-8">Discover how SmartWaste ELLM can transform your community's approach to waste.</p>
-            <div className="flex justify-center gap-4">
-              <a href="#" className="border border-green-600 text-green-600 dark:text-green-300 px-8 py-4 rounded-full hover:bg-green-50 dark:hover:bg-green-900 transition font-medium">
-                Contact for Solutions
-              </a>
-            </div>
-          </div>
-        </section>
-
-        {/* Footer */}
-        <footer className="bg-gray-900 text-gray-300 py-12">
-          <div className="max-w-6xl mx-auto px-6 grid md:grid-cols-4 gap-8">
-            <div>
-              <div className="flex items-center space-x-2 mb-4">
-                <FaRecycle className="text-2xl text-green-400" />
-                <span className="text-xl font-bold text-white">SmartWaste ELLM</span>
-              </div>
-              <p className="text-sm">Revolutionizing waste management through AI and LLM technology.</p>
-            </div>
-            <div>
-              <h4 className="text-white font-medium mb-4">Product</h4>
-              <ul className="space-y-2">
-                <li><a href="#" className="hover:text-green-400 transition">Features</a></li>
-                <li><a href="#" className="hover:text-green-400 transition">Pricing</a></li>
-                <li><a href="#" className="hover:text-green-400 transition">API</a></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="text-white font-medium mb-4">Company</h4>
-              <ul className="space-y-2">
-                <li><a href="#" className="hover:text-green-400 transition">About</a></li>
-                <li><a href="#" className="hover:text-green-400 transition">Blog</a></li>
-                <li><a href="#" className="hover:text-green-400 transition">Careers</a></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="text-white font-medium mb-4">Connect</h4>
-              <ul className="space-y-2">
-                <li><a href="#" className="hover:text-green-400 transition">Twitter</a></li>
-                <li><a href="#" className="hover:text-green-400 transition">LinkedIn</a></li>
-                <li><a href="#" className="hover:text-green-400 transition">Contact Us</a></li>
-              </ul>
-            </div>
-          </div>
-          <div className="max-w-6xl mx-auto px-6 pt-8 mt-8 border-t border-gray-800 text-sm text-center">
-            <p>© {new Date().getFullYear()} SmartWaste ELLM. All rights reserved.</p>
-          </div>
-        </footer>
-      </div>
+        </div>
+      </section>
     </>
   );
 }

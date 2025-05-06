@@ -1,85 +1,104 @@
-"use client";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+'use client'
+
+import { useState, useRef } from 'react';
+import { FaRobot, FaUser, FaPaperPlane } from 'react-icons/fa';
+
+type Message = {
+  id: string;
+  text: string;
+  sender: 'user' | 'bot';
+};
 
 export default function Chatbot() {
-  const router = useRouter(); // For navigation
-  const [messages, setMessages] = useState<{ sender: string; text: string }[]>([]);
-  const [input, setInput] = useState("");
+  const [messages, setMessages] = useState<Message[]>([
+    { id: '1', text: 'Hello! I\'m your recycling assistant. Ask me anything about waste management in Malaysia.', sender: 'bot' }
+  ]);
+  const [input, setInput] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  const handleSend = async () => {
+  const handleSend = () => {
     if (!input.trim()) return;
-
-    const userMessage = { sender: "user", text: input };
-    setMessages((prev) => [...prev, userMessage]);
-
-    try {
-      const response = await fetch("/api/chatbot", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: input }),
-      });
-
-      const data = await response.json();
-      const botMessage = { sender: "bot", text: data.reply || "Sorry, I couldn't process that." };
-      setMessages((prev) => [...prev, botMessage]);
-    } catch (error) {
-      console.error("Error sending message:", error);
-      const errorMessage = { sender: "bot", text: "Something went wrong. Please try again later." };
-      setMessages((prev) => [...prev, errorMessage]);
-    }
-
-    setInput("");
+    
+    // Add user message
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      text: input,
+      sender: 'user'
+    };
+    setMessages(prev => [...prev, userMessage]);
+    setInput('');
+    
+    // Simulate bot response
+    setTimeout(() => {
+      const botResponses = [
+        "In Malaysia, plastic bottles should be rinsed and placed in the recycling bin.",
+        "Food waste should be separated and can be composted if possible.",
+        "E-waste like old phones should be taken to special collection centers.",
+        "Paper and cardboard should be dry and clean before recycling."
+      ];
+      const botMessage: Message = {
+        id: Date.now().toString(),
+        text: botResponses[Math.floor(Math.random() * botResponses.length)],
+        sender: 'bot'
+      };
+      setMessages(prev => [...prev, botMessage]);
+    }, 1000);
   };
 
   return (
-    <div className="flex flex-col h-screen bg-gradient-to-b from-green-50 to-gray-100 dark:from-green-900 dark:to-gray-900">
-      {/* Header */}
-      <div className="bg-green-600 text-white py-4 px-6 flex justify-between items-center shadow-md">
-        <h2 className="text-lg font-bold">LLM Chatbot</h2>
-        <button
-          onClick={() => router.push("/")} // Navigate back to the main page
-          className="bg-white text-green-600 px-4 py-2 rounded-lg hover:bg-gray-100 transition"
-        >
-          Back to Main Page
-        </button>
+    <div className="flex flex-col h-[500px]">
+      {/* Chat header */}
+      <div className="flex items-center gap-3 p-4 border-b border-green-200">
+        <FaRobot className="text-2xl text-green-600" />
+        <h3 className="font-semibold">Recycling Assistant</h3>
       </div>
-
-      {/* Chat Area */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-100 dark:bg-gray-800">
-        {messages.map((msg, index) => (
-          <div
-            key={index}
-            className={`flex ${msg.sender === "user" ? "justify-end" : "justify-start"}`}
+      
+      {/* Messages */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        {messages.map((message) => (
+          <div 
+            key={message.id} 
+            className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
           >
-            <div
-              className={`max-w-xs px-4 py-2 rounded-lg ${
-                msg.sender === "user"
-                  ? "bg-green-600 text-white"
-                  : "bg-gray-300 dark:bg-gray-600 text-gray-800 dark:text-gray-200"
-              }`}
+            <div className={`max-w-[80%] rounded-lg p-3 ${message.sender === 'user' 
+              ? 'bg-green-600 text-white' 
+              : 'bg-gray-100 dark:bg-gray-700'}`}
             >
-              {msg.text}
+              <div className="flex items-center gap-2 mb-1">
+                {message.sender === 'user' ? (
+                  <FaUser className="text-sm" />
+                ) : (
+                  <FaRobot className="text-sm" />
+                )}
+                <span className="text-xs font-medium">
+                  {message.sender === 'user' ? 'You' : 'SmartWaste'}
+                </span>
+              </div>
+              <p>{message.text}</p>
             </div>
           </div>
         ))}
       </div>
-
-      {/* Input Area */}
-      <div className="flex items-center p-4 border-t border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800">
-        <input
-          type="text"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="Type your message..."
-          className="flex-grow px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-600 dark:focus:ring-green-400"
-        />
-        <button
-          onClick={handleSend}
-          className="ml-4 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
-        >
-          Send
-        </button>
+      
+      {/* Input */}
+      <div className="p-4 border-t border-green-200">
+        <div className="flex gap-2">
+          <input
+            ref={inputRef}
+            type="text"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyPress={(e) => e.key === 'Enter' && handleSend()}
+            placeholder="Ask about recycling..."
+            className="flex-1 border border-green-300 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+          />
+          <button
+            onClick={handleSend}
+            className="bg-green-600 text-white rounded-full p-3 hover:bg-green-700 transition"
+          >
+            <FaPaperPlane />
+          </button>
+        </div>
       </div>
     </div>
   );
