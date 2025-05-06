@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { FaRecycle, FaRobot, FaChartLine, FaGamepad, FaLeaf } from "react-icons/fa";
 import Head from "next/head";
+import Chatbot from "../components/Chatbot";
 
 export default function Home() {
   return (
@@ -67,21 +68,19 @@ export default function Home() {
           <div className="grid md:grid-cols-2 gap-12">
             <div className="space-y-8">
               {[
-                { 
+                {
                   icon: <FaRobot className="text-3xl text-green-600 dark:text-green-400" />,
-                  title: "AI Waste Scanner", 
-                  desc: "Classify waste items through your phone's camera with our advanced image recognition" 
+                  title: "AI Waste Scanner",
+                  desc: "Classify waste items through your phone's camera with our advanced image recognition",
                 },
-                { 
+                {
                   icon: <FaChartLine className="text-3xl text-green-600 dark:text-green-400" />,
-                  title: "Predictive Analytics", 
-                  desc: "Optimized waste collection routes based on historical data and fill predictions" 
-                }
+                  title: "Predictive Analytics",
+                  desc: "Optimized waste collection routes based on historical data and fill predictions",
+                },
               ].map((feature, index) => (
                 <div key={index} className="flex gap-4">
-                  <div className="flex-shrink-0">
-                    {feature.icon}
-                  </div>
+                  <div className="flex-shrink-0">{feature.icon}</div>
                   <div>
                     <h3 className="text-xl font-semibold text-gray-800 dark:text-white">{feature.title}</h3>
                     <p className="text-gray-600 dark:text-gray-300 mt-2">{feature.desc}</p>
@@ -91,24 +90,31 @@ export default function Home() {
             </div>
             <div className="space-y-8">
               {[
-                { 
+                {
                   icon: <FaRecycle className="text-3xl text-green-600 dark:text-green-400" />,
-                  title: "LLM Chatbot", 
-                  desc: "Get instant answers about recycling rules and waste management practices" 
+                  title: "LLM Chatbot",
+                  desc: "Get instant answers about recycling rules and waste management practices",
+                  button: (
+                    <a
+                      href="/chatbot"
+                      className="inline-block px-6 py-3 bg-green-600 text-white rounded-full hover:bg-green-700 transition mt-4"
+                    >
+                      Go to Chatbot
+                    </a>
+                  ),
                 },
-                { 
+                {
                   icon: <FaGamepad className="text-3xl text-green-600 dark:text-green-400" />,
-                  title: "Gamified Experience", 
-                  desc: "Earn points and badges for proper waste sorting and recycling" 
-                }
+                  title: "Gamified Experience",
+                  desc: "Earn points and badges for proper waste sorting and recycling",
+                },
               ].map((feature, index) => (
                 <div key={index} className="flex gap-4">
-                  <div className="flex-shrink-0">
-                    {feature.icon}
-                  </div>
+                  <div className="flex-shrink-0">{feature.icon}</div>
                   <div>
                     <h3 className="text-xl font-semibold text-gray-800 dark:text-white">{feature.title}</h3>
                     <p className="text-gray-600 dark:text-gray-300 mt-2">{feature.desc}</p>
+                    {feature.button && feature.button}
                   </div>
                 </div>
               ))}
