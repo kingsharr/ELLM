@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { FaGamepad, FaTrophy, FaRecycle, FaWallet } from 'react-icons/fa';
 import Leaderboard from '@/components/Leaderboard';
+import SpinWheel from '@/components/SpinWheel';
 
 type WasteType = 'plastic' | 'paper' | 'food';
 
@@ -167,22 +168,31 @@ const GamePage = () => {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
-          <Leaderboard />
-        </div>
-      </div>
+        {/* Mystery Reward Spinner */}
+<div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 col-span-2 mt-12">
+  <h2 className="text-2xl font-bold mb-6 text-green">🎁 Mystery Reward Spinner</h2>
+  <SpinWheel />
+</div>
 
-      <div className="mt-12">
+        <div className="mt-12">
         <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">
           Test Your Recycling Knowledge!
         </h2>
         <RecyclingQuiz onReward={() => setWalletBalance(prev => parseFloat((prev + 0.10).toFixed(2)))} />
       </div>
+
+
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+          <Leaderboard />
+        </div>
+      </div>
+
     </section>
   );
 };
 
 export default GamePage;
+
 
 interface QuizProps {
   onReward: () => void;
@@ -252,4 +262,5 @@ const RecyclingQuiz = ({ onReward }: QuizProps) => {
       )}
     </div>
   );
+  
 };
