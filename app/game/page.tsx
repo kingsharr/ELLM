@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
 import { useState } from 'react';
-import { FaGamepad, FaTrophy, FaRecycle } from 'react-icons/fa';
+import { FaGamepad, FaTrophy, FaRecycle, FaWallet } from 'react-icons/fa';
 import Leaderboard from '@/components/Leaderboard';
 
 type WasteType = 'plastic' | 'paper' | 'food';
@@ -12,6 +12,7 @@ const GamePage = () => {
   const [badges, setBadges] = useState<string[]>([]);
   const [log, setLog] = useState<string[]>([]);
   const [lastUser, setLastUser] = useState<string | null>(null);
+  const [walletBalance, setWalletBalance] = useState(0); // RM balance
   const [wasteCategory, setWasteCategory] = useState<{ [key in WasteType]: number }>({
     plastic: 0,
     paper: 0,
@@ -24,30 +25,34 @@ const GamePage = () => {
     const wasteType = (form.wasteType as HTMLSelectElement).value as WasteType;
     const weight = parseFloat((form.weight as HTMLInputElement).value);
     const userId = (form.userId as HTMLInputElement).value;
-
+  
     setLastUser(userId);
-
+  
     let pointsPerKg = wasteType === 'plastic' ? 10 : wasteType === 'paper' ? 8 : 5;
     const earnedPoints = Math.round(pointsPerKg * weight);
     const newTotalPoints = totalPoints + earnedPoints;
     const newTotalWeight = totalWeight + weight;
-
+  
     setTotalPoints(newTotalPoints);
     setTotalWeight(newTotalWeight);
-
+  
     setWasteCategory(prev => ({
       ...prev,
       [wasteType]: prev[wasteType] + weight,
     }));
-
+  
     const newBadges: string[] = [];
     if (newTotalPoints >= 500 && !badges.includes('Recycler 500')) newBadges.push('Recycler 500');
     if (newTotalWeight >= 100 && !badges.includes('Waste Warrior')) newBadges.push('Waste Warrior');
     setBadges(prev => [...prev, ...newBadges.filter(b => !prev.includes(b))]);
-
+  
+    const cashReward = weight * 0.2;
+    setWalletBalance(prev => parseFloat((prev + cashReward).toFixed(2))); // Add RM based on weight
+  
     setLog(prev => [`User ${userId}: ${wasteType} (${weight}kg) → +${earnedPoints} pts`, ...prev.slice(0, 4)]);
     form.reset();
   };
+  
 
   const pointsProgress = Math.min((totalPoints / 500) * 100, 100);
   const weightProgress = Math.min((totalWeight / 100) * 100, 100);
@@ -70,20 +75,12 @@ const GamePage = () => {
       </p>
 
       <div className="grid md:grid-cols-2 gap-8">
-        
-        
-        {/* Left Section: Your Progress */}
+        {/* Left Section */}
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
           <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
             <FaTrophy className="text-yellow-500" /> Recycling Details
           </h2>
 
-
-
-
-
-
-          {/* Form and other elements */}
           <form onSubmit={handleScan} className="space-y-6">
             <div className="flex flex-col">
               <label className="text-lg font-medium text-gray-700 dark:text-gray-200 mb-2">User ID:</label>
@@ -113,29 +110,24 @@ const GamePage = () => {
           <ul className="mt-6 text-sm text-gray-700 dark:text-gray-300">
             {log.map((entry, i) => <li key={i}>🔄 {entry}</li>)}
           </ul>
-
-
-
-
         </div>
 
-        {/* Right Section: New Container */}
+        {/* Right Section */}
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
           <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
             <FaTrophy className="text-yellow-500" /> Badges & Progress
           </h2>
 
-          {/* Points and Weight Progress */}
-          <p className="text-lg text-green-600 mb-4">Total Points: {totalPoints}</p>
-          <p className="text-lg text-blue-600 mb-4">Total Waste: {totalWeight.toFixed(1)} kg</p>
+          <p className="text-lg text-green-600 mb-2">Total Points: {totalPoints}</p>
+          <p className="text-lg text-blue-600 mb-2">Total Waste: {totalWeight.toFixed(1)} kg</p>
+          <p className="text-lg text-purple-700 mb-4 flex items-center gap-2">
+            <FaWallet className="text-xl" /> TNG Wallet: <strong>RM {walletBalance.toFixed(2)}</strong>
+          </p>
 
           <div className="mb-6">
             <label className="block text-sm font-medium mb-1 text-gray-800">Points Progress</label>
             <div className="w-full h-4 bg-gray-200 rounded overflow-hidden">
-              <div
-                className="h-4 bg-green-500 rounded transition-all duration-500 ease-in-out"
-                style={{ width: `${pointsProgress}%` }}
-              />
+              <div className="h-4 bg-green-500 rounded transition-all duration-500" style={{ width: `${pointsProgress}%` }} />
             </div>
             <p className="text-xs mt-1 text-gray-600">{pointsProgress.toFixed(1)}% complete</p>
           </div>
@@ -143,10 +135,7 @@ const GamePage = () => {
           <div>
             <label className="block text-sm font-medium mb-1 text-gray-800">Weight Progress</label>
             <div className="w-full h-4 bg-gray-200 rounded overflow-hidden">
-              <div
-                className="h-4 bg-blue-500 rounded transition-all duration-500 ease-in-out"
-                style={{ width: `${weightProgress}%` }}
-              />
+              <div className="h-4 bg-blue-500 rounded transition-all duration-500" style={{ width: `${weightProgress}%` }} />
             </div>
             <p className="text-xs mt-1 text-gray-600">{weightProgress.toFixed(1)}% complete</p>
           </div>
@@ -156,10 +145,7 @@ const GamePage = () => {
             {badges.length ? (
               <ul className="space-y-1">
                 {badges.map((badge, i) => (
-                  <li
-                    key={i}
-                    className="text-green-700 dark:text-green-300 flex items-center gap-2 animate-bounce"
-                  >
+                  <li key={i} className="text-green-700 dark:text-green-300 flex items-center gap-2 animate-bounce">
                     🏅 <span>{badge}</span>
                   </li>
                 ))}
@@ -190,72 +176,30 @@ const GamePage = () => {
         <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">
           Test Your Recycling Knowledge!
         </h2>
-        <RecyclingQuiz />
+        <RecyclingQuiz onReward={() => setWalletBalance(prev => parseFloat((prev + 0.10).toFixed(2)))} />
       </div>
     </section>
   );
 };
-//
+
 export default GamePage;
 
-const RecyclingQuiz = () => {
+interface QuizProps {
+  onReward: () => void;
+}
+
+const RecyclingQuiz = ({ onReward }: QuizProps) => {
   const questions = [
-    {
-      question: "Which material should not be placed in a recycling bin?",
-      options: ["Glass", "Plastic", "Food waste", "Paper"],
-      correctAnswer: "Food waste",
-    },
-    {
-      question: "What is the main purpose of recycling?",
-      options: ["Reduce waste", "Increase pollution", "Create new products", "Both A and C"],
-      correctAnswer: "Both A and C",
-    },
-
-    {
-      question: "What does the number inside the recycling triangle represent?",
-      options: ["Type of plastic", "Recycling process", "Weight of the item", "Color of the item"],
-      correctAnswer: "Type of plastic",
-    },
-    {
-      question: "How many times can aluminum be recycled?",
-      options: ["Once", "Twice", "Infinitely", "Not recyclable"],
-      correctAnswer: "Infinitely",
-    },
-
-
-    {
-      question: "Which country has the highest recycling rate?",
-      options: ["Germany", "USA", "China", "India"],
-      correctAnswer: "Germany",
-    },
-    {
-      question: "What is the main benefit of recycling?",
-      options: ["Saves energy", "Reduces landfill waste", "Conserves natural resources", "All of the above"],
-      correctAnswer: "All of the above",
-    },
-    {
-      question: "What is e-waste?",
-      options: ["Electronic waste", "Energy waste", "Environmental waste", "None of the above"],
-      correctAnswer: "Electronic waste",
-    },
-    {
-      question: "Which of these items can be composted?",
-      options: ["Plastic bottles", "Food scraps", "Metal cans", "Glass jars"],
-      correctAnswer: "Food scraps",
-    },
-    {
-      question: "What is the recycling symbol for paper?",
-      options: ["♻️", "📄", "🗑️", "📰"],
-      correctAnswer: "♻️",
-    },
-
-    {
-      question: "What is the best way to reduce waste?",
-      options: ["Recycle", "Reuse", "Reduce", "All of the above"],
-      correctAnswer: "All of the above",
-    },
-
-
+    { question: "Which material should not be placed in a recycling bin?", options: ["Glass", "Plastic", "Food waste", "Paper"], correctAnswer: "Food waste" },
+    { question: "What is the main purpose of recycling?", options: ["Reduce waste", "Increase pollution", "Create new products", "Both A and C"], correctAnswer: "Both A and C" },
+    { question: "What does the number inside the recycling triangle represent?", options: ["Type of plastic", "Recycling process", "Weight of the item", "Color of the item"], correctAnswer: "Type of plastic" },
+    { question: "How many times can aluminum be recycled?", options: ["Once", "Twice", "Infinitely", "Not recyclable"], correctAnswer: "Infinitely" },
+    { question: "Which country has the highest recycling rate?", options: ["Germany", "USA", "China", "India"], correctAnswer: "Germany" },
+    { question: "What is the main benefit of recycling?", options: ["Saves energy", "Reduces landfill waste", "Conserves natural resources", "All of the above"], correctAnswer: "All of the above" },
+    { question: "What is e-waste?", options: ["Electronic waste", "Energy waste", "Environmental waste", "None of the above"], correctAnswer: "Electronic waste" },
+    { question: "Which of these items can be composted?", options: ["Plastic bottles", "Food scraps", "Metal cans", "Glass jars"], correctAnswer: "Food scraps" },
+    { question: "What is the recycling symbol for paper?", options: ["♻️", "📄", "🗑️", "📰"], correctAnswer: "♻️" },
+    { question: "What is the best way to reduce waste?", options: ["Recycle", "Reuse", "Reduce", "All of the above"], correctAnswer: "All of the above" },
   ];
 
   const [current, setCurrent] = useState(0);
@@ -265,7 +209,10 @@ const RecyclingQuiz = () => {
 
   const handleAnswer = (selected: string) => {
     const isCorrect = selected === questions[current].correctAnswer;
-    if (isCorrect) setScore(score + 10);
+    if (isCorrect) {
+      setScore(prev => prev + 10);
+      onReward(); // Add RM0.10 to wallet
+    }
 
     setFeedback(isCorrect ? '✅ Correct!' : '❌ Wrong!');
 
@@ -300,17 +247,9 @@ const RecyclingQuiz = () => {
               </button>
             ))}
           </div>
-          {feedback && (
-            <p className="mt-4 text-center font-semibold text-lg">
-              {feedback}
-            </p>
-          )}
+          {feedback && <p className="mt-4 text-center font-semibold text-lg">{feedback}</p>}
         </div>
       )}
     </div>
   );
 };
-
-
-
-
