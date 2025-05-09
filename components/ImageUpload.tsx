@@ -51,6 +51,16 @@ const wasteCategories = {
     color: 'bg-red-100 text-red-800',
     icon: '🗑️',
     disposal: "Try to separate recyclable components. If inseparable, check local waste regulations."
+  },
+  textile: {
+    color: 'bg-pink-100 text-pink-800',
+    icon: '👗',
+    disposal: "Donate if reusable, otherwise check for textile recycling programs in your area."
+  },
+  hazardous: {
+    color: 'bg-yellow-100 text-yellow-800',
+    icon: '☣️',
+    disposal: "Handle with care and dispose of at designated hazardous waste collection centers."
   }
 };
 
@@ -62,7 +72,71 @@ const classToCategory: Record<string, keyof typeof wasteCategories> = {
   'organic': 'organic',
   'electronic': 'electronic',
   'metal': 'metal',
-  'mixed': 'mixed'
+  'textile': 'textile',
+  'mixed': 'mixed',
+  'hazardous': 'hazardous',
+
+  // Additional Roboflow classes mapped to our categories
+  'plastic bottle': 'plastic',
+  'plastic container': 'plastic',
+  'plastic utensil': 'plastic',
+  'plastic cup': 'plastic',
+  'plastic straw': 'plastic',
+  'plastic bag': 'plastic',
+  'combined plastic': 'plastic',
+  'conatiner for household chemicals': 'plastic',
+  'plastic canister': 'plastic',
+  'plastic caps': 'plastic',
+  'plastic shaker': 'plastic',
+  'plastic toys': 'plastic',
+  
+  'cardboard': 'paper',
+  'cardboard box': 'paper',
+  'newspaper': 'paper',
+  'magazine': 'paper',
+  'office paper': 'paper',
+  'disposable tableware': 'paper',
+  'paper shavings': 'paper',
+  'paper mache': 'paper',
+  
+  'glass bottle': 'glass',
+  'glass jar': 'glass',
+  'glass container': 'glass',
+  
+  'food waste': 'organic',
+  'yard waste': 'organic',
+  'plant matter': 'organic',
+  'cellulose': 'organic',
+  'liquid': 'organic',
+  
+  'electronics': 'electronic',
+  'e waste': 'electronic',
+  'batteries': 'electronic',
+  'phone': 'electronic',
+  'computer': 'electronic',
+  
+  'aluminum can': 'metal',
+  'tin can': 'metal',
+  'metal container': 'metal',
+  'tin': 'metal',
+  'aerosols': 'metal',
+  'aluminium can': 'metal',
+  'aluminium cap': 'metal',
+  'foil': 'metal',
+  'iron utensils': 'metal',
+  'metal shavings': 'metal',
+  
+  'clothing': 'textile',
+  'fabric': 'textile',
+  
+  'chemical': 'hazardous',
+  'paint': 'hazardous',
+  'medical waste': 'hazardous',
+  
+  'trash': 'mixed',
+  'garbage': 'mixed',
+  'non recyclable': 'mixed',
+  'ceramic': 'mixed'
 };
 
 export default function ImageUpload() {
@@ -180,6 +254,8 @@ export default function ImageUpload() {
       setLoading(false);
     }
   };
+
+  
 
   // Draw bounding boxes when image and detections are available
   useEffect(() => {
