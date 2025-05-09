@@ -1,15 +1,11 @@
-import { NextApiRequest, NextApiResponse } from "next";
-import OpenAI from "openai";
-
-// Initialize OpenAI client with the new SDK format
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+import { NextApiRequest, NextApiResponse } 
+from "next";
 
 // Define types for better type safety
 type RequestBody = {
   message: string;
-  conversationHistory?: Array<{ role: "user" | "assistant" | "system"; content: string }>;
+  conversationHistory?: Array<{ role: "user" | "assistant"; content: string }>;
+  modelId?: string; // Add model ID for model selection
 };
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -21,16 +17,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   // Validate API key
-  if (!process.env.OPENAI_API_KEY) {
-    console.error("Missing OpenAI API key");
+  if (!process.env.HUGGINGFACE_API_KEY) {
+    console.error("Missing Hugging Face API key");
     return res.status(500).json({
-      error: "Server configuration error: Missing OpenAI API key. Please set it in your .env.local file.",
+      error: "Server configuration error: Missing Hugging Face API key. Please set it in your .env.local file.",
     });
   }
 
   try {
     // Get the message from the request body
-    const { message, conversationHistory = [] } = req.body as RequestBody;
+    const { message, conversationHistory = [], modelId } = req.body as RequestBody;
 
     console.log("Message received:", message);
 
@@ -40,56 +36,85 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(400).json({ error: "Valid message is required" });
     }
 
-    // Prepare conversation messages with correct typing for OpenAI SDK
-    const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
-      { role: "system", content: "You are a helpful assistant specializing in recycling and waste management." },
-      ...conversationHistory.map((msg) => ({
-        role: msg.role,
-        content: msg.content,
-      })),
-      { role: "user", content: message },
-    ];
-
-    console.log("Calling OpenAI API...");
-
-    // Call OpenAI API with the new SDK format
-    const response = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
-      messages: messages,
-      temperature: 0.7,
-      max_tokens: 500,
+    // Set the model to use
+    // Use the model from the request, fall back to env var, then default
+    const MODEL_ID = modelId || process.env.HF_MODEL_ID || "mistralai/Mistral-7B-Instruct-v0.2";
+    
+    // Create prompt from conversation history for context
+    let prompt = "";
+    
+    // Add system message for context
+    prompt += "You are a helpful assistant specializing in recycling and waste management. You provide accurate and helpful information about proper disposal methods, recycling practices, composting, and reducing waste. Keep responses informative and practical.\n\n";
+    
+    // Add conversation history to the prompt
+    conversationHistory.forEach(msg => {
+      prompt += `${msg.role === "user" ? "Human" : "Assistant"}: ${msg.content}\n`;
     });
+    
+    // Add the current message
+    prompt += `Human: ${message}\nAssistant:`;
 
-    const reply = response.choices[0]?.message?.content;
+    console.log("Calling Hugging Face API for model:", MODEL_ID);
 
-    if (!reply) {
-      throw new Error("No reply received from OpenAI");
+    // Call Hugging Face API
+    const response = await fetch(
+      `https://api-inference.huggingface.co/models/${MODEL_ID}`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${process.env.HUGGINGFACE_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          inputs: prompt,
+          parameters: {
+            max_new_tokens: 500,
+            temperature: 0.7,
+            top_p: 0.95,
+            do_sample: true,
+          }
+        }),
+      }
+    );
+
+    const responseText = await response.text();
+    
+    try {
+      // Try to parse as JSON
+      const data = JSON.parse(responseText);
+      
+      let reply = data[0]?.generated_text || "";
+      
+      // Extract only the assistant's response
+      reply = reply.split("Assistant:").pop() || "";
+      
+      // Clean up the response if needed
+      reply = reply.trim();
+
+      console.log("Reply generated successfully");
+      return res.status(200).json({
+        reply,
+      });
+    } catch (parseError) {
+      console.error("Failed to parse Hugging Face response as JSON:", responseText);
+      throw new Error("Invalid response from Hugging Face API: " + responseText.substring(0, 100));
     }
-
-    console.log("Reply generated successfully");
-    return res.status(200).json({
-      reply,
-      usage: response.usage,
-    });
   } catch (error: any) {
-    console.error("Error with OpenAI API:", error);
+    console.error("Error with Hugging Face API:", error);
 
     // Detailed error handling for different types of errors
-    if (error.status === 401) {
+    if (error.message.includes("401")) {
       return res.status(500).json({
-        error: "Invalid API key. Please check your OpenAI API key configuration."
+        error: "Invalid API key. Please check your Hugging Face API key configuration."
       });
-    } else if (error.status === 429) {
+    } else if (error.message.includes("429")) {
       return res.status(500).json({
-        error: "OpenAI rate limit reached or insufficient quota. Please check your billing status."
+        error: "Hugging Face rate limit reached. Please try again later."
       });
     }
 
-    const statusCode = error.response?.status || 500;
-    const errorMessage = error.response?.data?.error?.message || error.message || "Failed to fetch response from OpenAI";
-
-    return res.status(statusCode).json({
-      error: errorMessage,
+    return res.status(500).json({
+      error: "Failed to fetch response from Hugging Face",
       details: process.env.NODE_ENV === "development" ? error.toString() : undefined,
     });
   }
