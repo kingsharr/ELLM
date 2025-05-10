@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import Head from 'next/head';
-import Chatbot from '@/components/Chatbot';
+import Chatbot from '../../components/Chatbot';
 
 export default function ChatbotPage() {
   const router = useRouter();
@@ -42,8 +42,8 @@ export default function ChatbotPage() {
       </div>
 
       <footer className="bg-green-800 text-white p-4 text-center">
-        <p>© 2025 Recycling Assistant | Powered by Hugging Face AI</p>
+        <p>© 2025 Recycling Assistant | Powered by SmartWaste My</p>
       </footer>
-    </div>
-  );
+    </div>
+  );
 }
