@@ -7,9 +7,10 @@ import {
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword,
   signOut,
-  onAuthStateChanged
+  onAuthStateChanged,
+  User
 } from "firebase/auth";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc, DocumentData } from "firebase/firestore";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -23,8 +24,8 @@ export default function ProfilePage() {
   const [isSignup, setIsSignup] = useState(false);
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
-  const [user, setUser] = useState(null); // Changed from auth.currentUser to null
-  const [userData, setUserData] = useState(null);
+  const [user, setUser] = useState<User | null>(null); // Explicitly typed as User | null
+  const [userData, setUserData] = useState<DocumentData | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -50,7 +51,7 @@ export default function ProfilePage() {
     return () => unsubscribe();
   }, []);
 
-  const fetchUserData = async (userId) => {
+  const fetchUserData = async (userId: string) => {
     try {
       console.log("Fetching user data for:", userId);
       const docRef = doc(db, "users", userId);
@@ -114,11 +115,12 @@ export default function ProfilePage() {
   const handleAuth = async () => {
     setError("");
     setSuccessMessage("");
+    setLoading(true); // Ensure setLoading is used here
     
     if (!validateForm()) return;
 
     try {
-      setLoading(true);
+      // setLoading is already called at the start of handleAuth
       
       if (isSignup) {
         // Handle Signup
@@ -148,7 +150,7 @@ export default function ProfilePage() {
           console.log("User data saved to Firestore");
         } catch (firestoreError) {
           console.error("Error saving to Firestore:", firestoreError);
-          setError(`Error saving user data: ${firestoreError.message}`);
+          setError(`Error saving user data: ${(firestoreError as Error).message}`);
           setLoading(false);
           return;
         }
@@ -172,10 +174,11 @@ export default function ProfilePage() {
       }
     } catch (error) {
       setLoading(false);
-      console.error("Authentication error:", error.code, error.message);
-      
-      // Handle specific Firebase auth errors with user-friendly messages
-      switch (error.code) {
+      if (error instanceof Error) {
+        console.error("Authentication error:", (error as any).code, error.message);
+        
+        // Handle specific Firebase auth errors with user-friendly messages
+        switch ((error as any).code) {
         case 'auth/email-already-in-use':
           setError("This email is already registered. Please log in instead.");
           break;
@@ -192,7 +195,10 @@ export default function ProfilePage() {
           setError("Incorrect password. Please try again.");
           break;
         default:
-          setError(`Authentication failed: ${error.message}`);
+        }
+      } else {
+        console.error("An unknown error occurred:", error);
+        setError("An unexpected error occurred. Please try again.");
       }
     }
   };
@@ -210,7 +216,7 @@ export default function ProfilePage() {
     }
   };
 
-  if (loading) {
+  if (loading === true) {
     return (
       <div className="flex justify-center items-center h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
