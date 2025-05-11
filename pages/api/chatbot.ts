@@ -1,5 +1,4 @@
-import { NextApiRequest, NextApiResponse } 
-from "next";
+import { NextApiRequest, NextApiResponse } from "next";
 
 // Define types for better type safety
 type RequestBody = {
@@ -29,6 +28,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const { message, conversationHistory = [], modelId } = req.body as RequestBody;
 
     console.log("Message received:", message);
+    console.log("Using model:", modelId);
 
     // Validate input
     if (!message || typeof message !== "string") {
@@ -56,6 +56,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     console.log("Calling Hugging Face API for model:", MODEL_ID);
 
+    // Standard parameters for all models
+    const parameters = {
+      max_new_tokens: 500,
+      temperature: 0.7,
+      top_p: 0.95,
+      do_sample: true,
+    };
+
     // Call Hugging Face API
     const response = await fetch(
       `https://api-inference.huggingface.co/models/${MODEL_ID}`,
@@ -67,15 +75,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         },
         body: JSON.stringify({
           inputs: prompt,
-          parameters: {
-            max_new_tokens: 500,
-            temperature: 0.7,
-            top_p: 0.95,
-            do_sample: true,
-          }
+          parameters,
         }),
       }
     );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`Hugging Face API error (${response.status}):`, errorText);
+      
+      // Check if model is still loading
+      if (response.status === 503 && errorText.includes("Loading")) {
+        return res.status(503).json({
+          error: "The model is still loading. Please try again in a moment.",
+          isLoading: true,
+        });
+      }
+      
+      throw new Error(`Hugging Face API returned status ${response.status}: ${errorText}`);
+    }
 
     const responseText = await response.text();
     
@@ -83,17 +101,42 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       // Try to parse as JSON
       const data = JSON.parse(responseText);
       
-      let reply = data[0]?.generated_text || "";
+      let reply = "";
+      
+      // Different models return different response formats
+      if (Array.isArray(data) && data[0]?.generated_text) {
+        // Format for mistral, llama and similar models
+        reply = data[0].generated_text;
+      } else if (data.generated_text) {
+        // Alternative format for some models
+        reply = data.generated_text;
+      } else {
+        console.error("Unexpected response format:", data);
+        throw new Error("Unexpected response format from Hugging Face API");
+      }
       
       // Extract only the assistant's response
-      reply = reply.split("Assistant:").pop() || "";
+      const assistantPart = reply.split("Assistant:").pop();
       
-      // Clean up the response if needed
-      reply = reply.trim();
+      if (assistantPart) {
+        // Found "Assistant:" in the response
+        reply = assistantPart.trim();
+      } else {
+        // If we can't find "Assistant:", just return the whole thing
+        // but try to clean it up a bit
+        reply = reply.replace(prompt, "").trim();
+      }
+      
+      // Further cleaning - remove any trailing "Human:" parts
+      const humanIndex = reply.indexOf("\nHuman:");
+      if (humanIndex > 0) {
+        reply = reply.substring(0, humanIndex).trim();
+      }
 
       console.log("Reply generated successfully");
       return res.status(200).json({
         reply,
+        model: MODEL_ID,
       });
     } catch (parseError) {
       console.error("Failed to parse Hugging Face response as JSON:", responseText);
@@ -110,6 +153,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     } else if (error.message.includes("429")) {
       return res.status(500).json({
         error: "Hugging Face rate limit reached. Please try again later."
+      });
+    } else if (error.message.includes("404")) {
+      return res.status(500).json({
+        error: "Model not found. Please check the model ID."
       });
     }
 

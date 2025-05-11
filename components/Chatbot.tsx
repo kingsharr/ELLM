@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react';
-import { FaRobot, FaUser, FaPaperPlane } from 'react-icons/fa';
+import { FaRobot, FaUser, FaPaperPlane, FaCog } from 'react-icons/fa';
 
 type Message = {
   id: string;
@@ -9,44 +9,10 @@ type Message = {
   role: 'user' | 'assistant';
 };
 
+type ChatHistory = Array<{ role: 'user' | 'assistant'; content: string }>;
+
 // Define the component
 export default function Chatbot() {
-  // Hardcoded responses logic
-  const getResponse = (input: string) => {
-    const query = input.toLowerCase().trim();
-    
-    if (query === 'hi' || query === 'hello' || query === 'hey') {
-      return "Hello! I'm Bob, your recycling assistant. How can I help you with waste management today?";
-    }
-    
-    if (query.includes('recycle') || query === 'what can i recycle?') {
-      return "You can recycle many items including paper, cardboard, glass bottles, aluminum cans, and certain plastics. Always check your local recycling guidelines as they may vary.";
-    }
-    
-    if (query.includes('waste') || query === 'what is waste?') {
-      return "Waste refers to any material that is unwanted or unusable. It includes solid waste (trash or garbage), liquid waste (wastewater), and gaseous waste (air pollution). Proper waste management involves strategies to reduce, reuse, recycle, and responsibly dispose of materials to minimize environmental impact.";
-    }    
-    
-    if (query.includes('paper') || query.includes('recyclable') || query === 'can i recycle paper?') {
-      return "Yes, paper is generally recyclable! Most types of paper including newspapers, magazines, office paper, cardboard, and paper packaging can be recycled. However, some paper products like paper towels, tissues, and paper contaminated with food or oil typically cannot be recycled. Always check your local recycling guidelines as they may vary.";
-    }
-    
-    if (query.includes('compost') || query === 'what is composting?') {
-      return "Composting is simple! Start with a bin or pile in your yard or use an indoor compost bin. Add 'green' materials (fruit/vegetable scraps, coffee grounds, grass clippings) and 'brown' materials (dry leaves, newspaper, cardboard) in roughly equal amounts. Keep it moist like a wrung-out sponge, turn it occasionally, and in a few months, you'll have rich compost for your garden!";
-    }    
-    
-    if (query.includes('zero waste') || query === 'what is zero waste?') {
-      return "Zero waste is a philosophy that encourages the redesign of resource life cycles so that all products are reused and no trash is sent to landfills, incinerators, or the ocean. The goal is to eliminate waste rather than manage it. This involves refusing unnecessary items, reducing consumption, reusing and repairing items, recycling materials, and composting organic matter.";
-    }
-    
-    if (query.includes('recycling') || query === 'what is recycling?') {
-      return "Recycling is the process of converting waste materials into new materials and objects. It helps reduce the consumption of fresh raw materials, decrease energy usage, lower greenhouse gas emissions, and reduce air and water pollution. Commonly recycled materials include paper, glass, metals, and certain plastics.";
-    }
-    
-    // Default response if no matches
-    return "I'm sorry, I don't have information about that yet. As Bob, I can answer questions about recycling basics, waste management, composting, paper recycling, and zero waste approaches. Feel free to ask me about these topics!";
-  };
-
   const [messages, setMessages] = useState<Message[]>([
     { 
       id: '1', 
@@ -56,6 +22,10 @@ export default function Chatbot() {
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [modelId, setModelId] = useState('mistralai/Mistral-7B-Instruct-v0.2'); // Default model
+  const [showSettings, setShowSettings] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -68,7 +38,16 @@ export default function Chatbot() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const handleSend = () => {
+  // Convert messages to the format expected by the API
+  const prepareConversationHistory = (): ChatHistory => {
+    // Skip the first message (welcome message) and convert the rest
+    return messages.slice(1).map(msg => ({
+      role: msg.role,
+      content: msg.content
+    }));
+  };
+
+  const handleSend = async () => {
     if (!input.trim() || isLoading) return;
     
     // Add user message
@@ -81,34 +60,114 @@ export default function Chatbot() {
     setMessages(prev => [...prev, userMessage]);
     setInput('');
     setIsLoading(true);
+    setErrorMessage(null);
     
-    // Short delay to simulate processing
-    setTimeout(() => {
-      // Get response based on user input
-      const responseContent = getResponse(input);
+    try {
+      // Prepare conversation history
+      const conversationHistory = prepareConversationHistory();
+      
+      // Call the API
+      const response = await fetch('/api/chatbot', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: input,
+          conversationHistory,
+          modelId,
+        }),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to get response');
+      }
+      
+      const data = await response.json();
       
       // Add bot response
       const botMessage: Message = {
         id: Date.now().toString(),
-        content: responseContent,
+        content: data.reply,
         role: 'assistant'
       };
       
       setMessages(prev => [...prev, botMessage]);
+    } catch (error) {
+      console.error('Error calling chatbot API:', error);
+      setErrorMessage(error instanceof Error ? error.message : 'Failed to get response');
+      
+      // Add error message as bot response
+      const errorResponseMessage: Message = {
+        id: Date.now().toString(),
+        content: 'Sorry, I encountered an error. Please try again later.',
+        role: 'assistant'
+      };
+      
+      setMessages(prev => [...prev, errorResponseMessage]);
+    } finally {
       setIsLoading(false);
       
       // Focus input after response
       setTimeout(() => inputRef.current?.focus(), 100);
-    }, 800);
+    }
   };
+
+  // Available models for the dropdown (Hugging Face models)
+  const availableModels = [
+    { id: 'mistralai/Mistral-7B-Instruct-v0.2', name: 'Mistral-7B' },
+    { id: 'google/gemma-7b-it', name: 'Gemma-7B' },
+    { id: 'microsoft/Phi-3-mini-4k-instruct', name: 'Phi-3-mini' },
+    { id: 'HuggingFaceH4/zephyr-7b-beta', name: 'Zephyr-7B' },
+    { id: 'bigscience/bloom', name: 'BLOOM' },
+    { id: 'google/flan-t5-xl', name: 'Flan-T5-XL' },
+  ];
 
   return (
     <div className="flex flex-col h-[600px] border rounded-lg shadow-lg">
       {/* Chat header */}
-      <div className="flex items-center gap-3 p-4 bg-green-600 text-white rounded-t-lg">
-        <FaRobot className="text-2xl" />
-        <h3 className="font-semibold text-lg">Bob - Recycling Assistant</h3>
+      <div className="flex items-center justify-between p-4 bg-green-600 text-white rounded-t-lg">
+        <div className="flex items-center gap-3">
+          <FaRobot className="text-2xl" />
+          <h3 className="font-semibold text-lg">Bob - Recycling Assistant</h3>
+        </div>
+        <button 
+          onClick={() => setShowSettings(!showSettings)}
+          className="text-white hover:bg-green-700 p-2 rounded-full"
+          title="Settings"
+        >
+          <FaCog />
+        </button>
       </div>
+      
+      {/* Settings panel */}
+      {showSettings && (
+        <div className="p-4 bg-green-50 dark:bg-gray-700 border-b border-green-200 dark:border-gray-600">
+          <h4 className="font-medium mb-2 text-green-800 dark:text-green-200">Model Settings</h4>
+          <select
+            value={modelId}
+            onChange={(e) => setModelId(e.target.value)}
+            className="w-full p-2 border border-green-300 dark:border-gray-500 rounded bg-white dark:bg-gray-800 text-gray-800 dark:text-white"
+          >
+            {availableModels.map(model => (
+              <option key={model.id} value={model.id}>
+                {model.name}
+              </option>
+            ))}
+          </select>
+          <p className="text-xs mt-1 text-green-600 dark:text-green-300">
+            Selected model: {modelId}
+          </p>
+        </div>
+      )}
+      
+      {/* Error message */}
+      {errorMessage && (
+        <div className="p-2 bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-200 text-sm">
+          Error: {errorMessage}
+        </div>
+      )}
       
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50 dark:bg-gray-800">
@@ -177,6 +236,6 @@ export default function Chatbot() {
           </button>
         </div>
       </div>
-    </div>
-  );
+    </div>
+  );
 }
