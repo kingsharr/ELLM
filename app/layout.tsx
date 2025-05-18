@@ -42,41 +42,53 @@ export default function RootLayout({
           
           {/* Footer */}
           <footer className="bg-gray-900 text-gray-300 py-12 mt-16">
-            <div className="max-w-6xl mx-auto px-6 grid md:grid-cols-4 gap-8">
-              <div>
-                <div className="flex items-center space-x-2 mb-4">
-                  <FaRecycle className="text-2xl text-green-400" />
-                  <span className="text-xl font-bold text-white">SmartWaste ELLM</span>
+            <div className="max-w-6xl mx-auto px-6">
+              <div className="grid md:grid-cols-3 gap-8 mb-12">
+                {/* Company Info */}
+                <div className="md:col-span-2 lg:col-span-1">
+                  <div className="flex items-center space-x-2 mb-4">
+                    <FaRecycle className="text-2xl text-green-400" />
+                    <span className="text-xl font-bold text-white">SmartWaste ELLM</span>
+                  </div>
+                  <p className="text-sm text-gray-400 max-w-xs">
+                    Revolutionizing waste management through AI and LLM technology.
+                  </p>
                 </div>
-                <p className="text-sm">Revolutionizing waste management through AI and LLM technology.</p>
+
+                {/* Product Links */}
+                <div className="space-y-4">
+                  <h4 className="text-white font-medium mb-4 text-lg">Products</h4>
+                  <ul className="space-y-3">
+                    <li><Link href="/detection" className="hover:text-green-400 transition-colors flex items-center gap-2">
+                      <span>Detection</span>
+                    </Link></li>
+                    <li><Link href="/chatbot" className="hover:text-green-400 transition-colors flex items-center gap-2">
+                      <span>Chatbot</span>
+                    </Link></li>
+                    <li><Link href="/prediction" className="hover:text-green-400 transition-colors flex items-center gap-2">
+                      <span>Prediction</span>
+                    </Link></li>
+                    <li><Link href="/game" className="hover:text-green-400 transition-colors flex items-center gap-2">
+                      <span>Game</span>
+                    </Link></li>
+                  </ul>
+                </div>
+
+                {/* Additional Links */}
+                <div className="space-y-4">
+                  <h4 className="text-white font-medium mb-4 text-lg">Resources</h4>
+                  <ul className="space-y-3">
+                    <li><Link href="/profile" className="hover:text-green-400 transition-colors">Profile</Link></li>
+                  </ul>
+                </div>
               </div>
-              <div>
-                <h4 className="text-white font-medium mb-4">Product</h4>
-                <ul className="space-y-2">
-                  <li><Link href="/detection" className="hover:text-green-400 transition">Detection</Link></li>
-                  <li><Link href="/chatbot" className="hover:text-green-400 transition">Chatbot</Link></li>
-                  <li><Link href="/prediction" className="hover:text-green-400 transition">Prediction</Link></li>
-                </ul>
+
+              {/* Copyright */}
+              <div className="pt-8 border-t border-gray-800 text-center">
+                <p className="text-sm text-gray-500">
+                  © {new Date().getFullYear()} SmartWaste ELLM. All rights reserved.
+                </p>
               </div>
-              <div>
-                <h4 className="text-white font-medium mb-4">Company</h4>
-                <ul className="space-y-2">
-                  <li><Link href="/about" className="hover:text-green-400 transition">About</Link></li>
-                  <li><Link href="/blog" className="hover:text-green-400 transition">Blog</Link></li>
-                  <li><Link href="/contact" className="hover:text-green-400 transition">Contact</Link></li>
-                </ul>
-              </div>
-              <div>
-                <h4 className="text-white font-medium mb-4">Legal</h4>
-                <ul className="space-y-2">
-                  <li><Link href="/privacy" className="hover:text-green-400 transition">Privacy</Link></li>
-                  <li><Link href="/terms" className="hover:text-green-400 transition">Terms</Link></li>
-                  <li><Link href="/cookies" className="hover:text-green-400 transition">Cookies</Link></li>
-                </ul>
-              </div>
-            </div>
-            <div className="max-w-6xl mx-auto px-6 pt-8 mt-8 border-t border-gray-800 text-sm text-center">
-              <p>© {new Date().getFullYear()} SmartWaste ELLM. All rights reserved.</p>
             </div>
           </footer>
         </div>
