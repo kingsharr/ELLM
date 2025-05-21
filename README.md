@@ -32,7 +32,6 @@ SmartWaste ELLM is an innovative waste management solution that combines Artific
 
 Install dependencies:
 
-bash
 npm install
 
 Create .env.local in the project root with the following content:
