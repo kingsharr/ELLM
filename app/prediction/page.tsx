@@ -3,23 +3,10 @@
 import { FaChartLine } from "react-icons/fa";
 import { useState, useEffect, useMemo } from "react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import Papa from 'papaparse';
-import 'leaflet/dist/leaflet.css';
-import L from 'leaflet';
-import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
-import markerIcon from 'leaflet/dist/images/marker-icon.png';
-import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 import dynamic from 'next/dynamic';
 
 const MapComponent = dynamic(() => import('./MapComponent'), { ssr: false });
-
-// Fix Leaflet icon issue
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: markerIcon2x.src || markerIcon2x,
-  iconUrl: markerIcon.src || markerIcon,
-  shadowUrl: markerShadow.src || markerShadow,
-});
 
 interface WasteData {
   Year: string;
@@ -34,6 +21,7 @@ export default function PredictionPage() {
   const [data, setData] = useState<WasteData[]>([]);
   const [filteredCategory, setFilteredCategory] = useState<string>("All");
   const [categories, setCategories] = useState<string[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
     async function fetchData() {
@@ -59,6 +47,8 @@ export default function PredictionPage() {
         setCategories(["All", ...Array.from(new Set(formattedData.map(d => d.Category)))]);
       } catch (error) {
         console.error("CSV fetch or parse error:", error);
+      } finally {
+        setLoading(false);
       }
     }
     fetchData();
@@ -70,7 +60,13 @@ export default function PredictionPage() {
     return data.filter(item => item.Category === filteredCategory);
   }, [filteredCategory, data]);
 
-  const topWasteLocations = useMemo(() => filteredData.filter(item => item.Volume > 100), [filteredData]);
+  // Filter locations with volume > 100 and valid coords
+  const topWasteLocations = useMemo(() => 
+    filteredData.filter(item => item.Volume > 100 && item.lat !== 0 && item.lng !== 0), 
+    [filteredData]
+  );
+
+  if (loading) return <div className="text-center py-20">Loading data...</div>;
 
   return (
     <section className="max-w-6xl mx-auto px-6 py-12">
@@ -111,24 +107,6 @@ export default function PredictionPage() {
 
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
         <MapComponent locations={topWasteLocations} />
-      </div>
-
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
-        <MapContainer
-          center={[3.139, 101.6869]}
-          zoom={6}
-          style={{ height: "500px", width: "100%" }}
-          scrollWheelZoom={false}
-        >
-          <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-          {topWasteLocations.map((loc, idx) => (
-            <Marker key={idx} position={[loc.lat, loc.lng]}>
-              <Popup>
-                {loc.Location}: {loc.Volume} kg
-              </Popup>
-            </Marker>
-          ))}
-        </MapContainer>
       </div>
     </section>
   );

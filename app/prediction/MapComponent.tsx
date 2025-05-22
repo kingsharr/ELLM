@@ -13,16 +13,21 @@ L.Icon.Default.mergeOptions({
   shadowUrl: markerShadow.src || markerShadow,
 });
 
+interface Location {
+  lat: number;
+  lng: number;
+  Location: string;
+  Volume: number;
+}
+
 interface MapComponentProps {
-  locations: {
-    lat: number;
-    lng: number;
-    Location: string;
-    Volume: number;
-  }[];
+  locations: Location[];
 }
 
 export default function MapComponent({ locations }: MapComponentProps) {
+  // Filter out invalid coordinates to avoid rendering markers at [0,0]
+  const validLocations = locations.filter(loc => loc.lat !== 0 && loc.lng !== 0);
+
   return (
     <MapContainer
       center={[3.139, 101.6869]}
@@ -31,7 +36,7 @@ export default function MapComponent({ locations }: MapComponentProps) {
       scrollWheelZoom={false}
     >
       <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-      {locations.map((loc, idx) => (
+      {validLocations.map((loc, idx) => (
         <Marker key={idx} position={[loc.lat, loc.lng]}>
           <Popup>
             {loc.Location}: {loc.Volume} kg
