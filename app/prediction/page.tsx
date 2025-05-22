@@ -10,6 +10,9 @@ import L from 'leaflet';
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
+import dynamic from 'next/dynamic';
+
+const MapComponent = dynamic(() => import('./MapComponent'), { ssr: false });
 
 // Fix Leaflet icon issue
 L.Icon.Default.mergeOptions({
@@ -104,6 +107,10 @@ export default function PredictionPage() {
             <Line type="monotone" dataKey="Volume" stroke="#82ca9d" />
           </LineChart>
         </ResponsiveContainer>
+      </div>
+
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+        <MapComponent locations={topWasteLocations} />
       </div>
 
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
