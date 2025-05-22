@@ -11,7 +11,6 @@ import {
   User
 } from "firebase/auth";
 import { doc, getDoc, setDoc, DocumentData } from "firebase/firestore";
-import { useRouter } from "next/navigation";
 
 export default function ProfilePage() {
   const [email, setEmail] = useState("");
@@ -118,6 +117,10 @@ export default function ProfilePage() {
       return;
     }
 
+    interface FirebaseAuthError extends Error {
+      code?: string;
+    }
+
     try {
       if (isSignup) {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
@@ -144,7 +147,9 @@ export default function ProfilePage() {
       }
     } catch (error) {
       if (error instanceof Error) {
-        switch ((error as any).code) {
+        const firebaseError = error as FirebaseAuthError;
+
+        switch (firebaseError.code) {
           case "auth/email-already-in-use":
             setError("This email is already registered. Please log in instead.");
             break;

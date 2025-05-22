@@ -408,13 +408,16 @@ export default function ImageUpload() {
           <div>
             <div className="relative">
               {/* Hidden native img for ref and measuring */}
-              <img
-                ref={imageRef}           // Keep this for measuring purposes, but hide it
+              <Image
+                ref={imageRef}
                 src={image!}
                 alt="Uploaded waste"
                 className="hidden"
+                width={500}
+                height={400}
+                unoptimized={true}
               />
-
+              
               {/* Next.js Image component */}
               <Image
                 src={image!}
