@@ -2,7 +2,6 @@ import { useState } from "react";
 import { FaRecycle } from "react-icons/fa";
 
 export default function GamePage() {
-  const [totalPoints, setTotalPoints] = useState(0);
   const [plasticWeight, setPlasticWeight] = useState(0);
   const [paperWeight, setPaperWeight] = useState(0);
   const [foodWeight, setFoodWeight] = useState(0);
@@ -44,7 +43,6 @@ export default function GamePage() {
     }
 
     const earnedPoints = Math.round(pointsPerKg * weight);
-    setTotalPoints((prev) => prev + earnedPoints);
     setPlasticWeight(updatedPlasticWeight);
     setPaperWeight(updatedPaperWeight);
     setFoodWeight(updatedFoodWeight);
@@ -156,5 +154,3 @@ export default function GamePage() {
     </section>
   );
 }
-
-

@@ -40,14 +40,17 @@ export default function PredictionPage() {
         const csvText = await res.text();
 
         const parsed = Papa.parse(csvText, { header: true, skipEmptyLines: true });
-        const formattedData: WasteData[] = parsed.data.map((row: any) => ({
-          Year: row.Year || "Unknown",
-          Category: row.Category || "Unknown",
-          Volume: parseFloat(row["Volume (kg)"]) || 0,
-          Location: row.Location || "Unknown",
-          lat: parseFloat(row.Latitude) || 0,
-          lng: parseFloat(row.Longitude) || 0,
-        }));
+        const formattedData: WasteData[] = parsed.data.map((row) => {
+          const r = row as Record<string, string>;
+          return {
+            Year: r.Year || "Unknown",
+            Category: r.Category || "Unknown",
+            Volume: parseFloat(r["Volume (kg)"]) || 0,
+            Location: r.Location || "Unknown",
+            lat: parseFloat(r.Latitude) || 0,
+            lng: parseFloat(r.Longitude) || 0,
+          };
+        });
 
         setData(formattedData);
         setCategories(["All", ...Array.from(new Set(formattedData.map(d => d.Category)))]);

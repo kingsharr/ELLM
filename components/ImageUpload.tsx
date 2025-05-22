@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { FaUpload, FaTrash, FaSpinner, FaRecycle, FaExclamationTriangle } from 'react-icons/fa';
+import Image from 'next/image'; 
 
 // This interface defines what a waste detection looks like
 interface WasteDetection {
@@ -211,13 +212,28 @@ export default function ImageUpload() {
       }
       
       // Parse the JSON response
-      const data = await response.json();
+      interface RoboflowPrediction {
+        class: string;
+        confidence: number;
+        x: number;
+        y: number;
+        width: number;
+        height: number;
+      }
+
+      interface RoboflowResponse {
+        predictions: RoboflowPrediction[];
+        image: { width: number; height: number };
+      }
+
+      const data: RoboflowResponse = await response.json();
+
       console.log('Roboflow API response:', data);
       
       // Check if we have predictions
       if (data.predictions && data.predictions.length > 0) {
         // Format the detections
-        const formattedDetections = data.predictions.map((pred: any) => ({
+        const formattedDetections = data.predictions.map((pred) => ({
           class: pred.class,
           confidence: pred.confidence,
           bbox: {
@@ -391,15 +407,24 @@ export default function ImageUpload() {
         <div className="grid md:grid-cols-2 gap-6">
           <div>
             <div className="relative">
-              {/* The actual image */}
-              <img 
-                ref={imageRef}
-                src={image} 
-                alt="Uploaded waste" 
-                className="rounded-lg w-full max-h-80 object-contain border border-gray-200"
-                crossOrigin="anonymous"
+              {/* Hidden native img for ref and measuring */}
+              <img
+                ref={imageRef}           // Keep this for measuring purposes, but hide it
+                src={image!}
+                alt="Uploaded waste"
+                className="hidden"
               />
-              
+
+              {/* Next.js Image component */}
+              <Image
+                src={image!}
+                alt="Uploaded waste"
+                width={500}              // Adjust size as needed
+                height={400}
+                className="rounded-lg w-full max-h-80 object-contain border border-gray-200"
+                unoptimized={true}       // Because base64 or external image
+              />
+
               {/* Canvas overlay for drawing detection boxes */}
               <canvas 
                 ref={canvasRef}

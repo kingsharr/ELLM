@@ -14,7 +14,6 @@ import { doc, getDoc, setDoc, DocumentData } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 
 export default function ProfilePage() {
-  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
