@@ -259,71 +259,76 @@ export default function ImageUpload() {
 
   // Draw bounding boxes when image and detections are available
   useEffect(() => {
-    if (image && detections.length > 0 && imageRef.current && canvasRef.current) {
-      const img = imageRef.current;
-      const canvas = canvasRef.current;
-      const ctx = canvas.getContext('2d');
-      
-      if (!ctx) return;
-      
-      // Set canvas size to match image
-      canvas.width = img.width;
-      canvas.height = img.height;
-      
-      // Clear canvas
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      
-      // Draw each detection
-      detections.forEach((detection) => {
-        // Calculate actual pixel coordinates from normalized values
-        const x = detection.bbox.x - detection.bbox.width / 2; // Roboflow uses center coordinates
-        const y = detection.bbox.y - detection.bbox.height / 2;
-        const width = detection.bbox.width;
-        const height = detection.bbox.height;
-        
-        const actualX = x * canvas.width;
-        const actualY = y * canvas.height;
-        const actualWidth = width * canvas.width;
-        const actualHeight = height * canvas.height;
-        
-        // Get color based on waste class
-        const category = classToCategory[detection.class.toLowerCase()] || 'mixed';
-        let color = '#00FF00'; // Default green
-        
-        switch(category) {
-          case 'plastic': color = '#3B82F6'; break; // Blue
-          case 'paper': color = '#F59E0B'; break; // Amber
-          case 'glass': color = '#10B981'; break; // Emerald
-          case 'organic': color = '#22C55E'; break; // Green
-          case 'electronic': color = '#8B5CF6'; break; // Purple
-          case 'metal': color = '#6B7280'; break; // Gray
-          case 'mixed': color = '#EF4444'; break; // Red
-        }
-        
-        // Draw rectangle
-        ctx.strokeStyle = color;
-        ctx.lineWidth = 3;
-        ctx.strokeRect(actualX, actualY, actualWidth, actualHeight);
-        
-        // Draw label background
-        ctx.fillStyle = color;
-        const label = `${detection.class} ${Math.round(detection.confidence * 100)}%`;
-        ctx.font = 'bold 16px Inter, sans-serif';
-        const textMetrics = ctx.measureText(label);
-        const textHeight = 24;
-        ctx.fillRect(
-          actualX, 
-          actualY - textHeight, 
-          textMetrics.width + 10, 
-          textHeight
-        );
-        
-        // Draw label text
-        ctx.fillStyle = '#FFFFFF';
-        ctx.fillText(label, actualX + 5, actualY - 7);
-      });
+  if (image && detections.length > 0 && imageRef.current && canvasRef.current) {
+    const img = imageRef.current;
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+
+    if (!ctx) return;
+
+    // MAX canvas dimension to avoid exceeding browser/Vercel limits
+    const MAX_CANVAS_AREA = 16000 * 1000; // 16 million pixels
+
+    // Calculate image aspect ratio and target canvas size
+    let targetWidth = img.naturalWidth;
+    let targetHeight = img.naturalHeight;
+    const imageArea = targetWidth * targetHeight;
+
+    if (imageArea > MAX_CANVAS_AREA) {
+      const scaleFactor = Math.sqrt(MAX_CANVAS_AREA / imageArea);
+      targetWidth = Math.floor(targetWidth * scaleFactor);
+      targetHeight = Math.floor(targetHeight * scaleFactor);
     }
-  }, [image, detections]);
+
+    // Set canvas size
+    canvas.width = targetWidth;
+    canvas.height = targetHeight;
+
+    // Clear previous drawings
+    ctx.clearRect(0, 0, targetWidth, targetHeight);
+
+    // Draw bounding boxes
+    detections.forEach((detection) => {
+      const x = detection.bbox.x - detection.bbox.width / 2;
+      const y = detection.bbox.y - detection.bbox.height / 2;
+      const width = detection.bbox.width;
+      const height = detection.bbox.height;
+
+      const actualX = x * targetWidth;
+      const actualY = y * targetHeight;
+      const actualWidth = width * targetWidth;
+      const actualHeight = height * targetHeight;
+
+      const category = classToCategory[detection.class.toLowerCase()] || 'mixed';
+      let color = '#00FF00';
+
+      switch (category) {
+        case 'plastic': color = '#3B82F6'; break;
+        case 'paper': color = '#F59E0B'; break;
+        case 'glass': color = '#10B981'; break;
+        case 'organic': color = '#22C55E'; break;
+        case 'electronic': color = '#8B5CF6'; break;
+        case 'metal': color = '#6B7280'; break;
+        case 'mixed': color = '#EF4444'; break;
+      }
+
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 3;
+      ctx.strokeRect(actualX, actualY, actualWidth, actualHeight);
+
+      const label = `${detection.class} ${Math.round(detection.confidence * 100)}%`;
+      ctx.font = 'bold 16px Inter, sans-serif';
+      const textMetrics = ctx.measureText(label);
+      const textHeight = 24;
+
+      ctx.fillStyle = color;
+      ctx.fillRect(actualX, actualY - textHeight, textMetrics.width + 10, textHeight);
+
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillText(label, actualX + 5, actualY - 7);
+    });
+  }
+}, [image, detections]);
 
   // Reset function
   const resetUpload = () => {

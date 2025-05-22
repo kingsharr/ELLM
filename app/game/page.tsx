@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
 import { useState } from 'react';
-import { FaGamepad, FaTrophy, FaRecycle, FaWallet, FaLeaf, FaTree, FaTrash, FaAward } from 'react-icons/fa';
+import { FaTrophy, FaRecycle, FaLeaf, FaTree, FaAward } from 'react-icons/fa';
 import { MdRecycling, MdNature, MdEco } from 'react-icons/md';
 import Leaderboard from '@/components/Leaderboard';
 import SpinWheel from '@/components/SpinWheel';
@@ -16,17 +16,15 @@ const GamePage = () => {
   const [userId, setUserId] = useState<string>('');
   const [isUserIdLocked, setIsUserIdLocked] = useState(false);
   const [walletBalance, setWalletBalance] = useState(0); // RM balance
-  const [wasteCategory, setWasteCategory] = useState<{ [key in WasteType]: number }>({
-    plastic: 0,
-    paper: 0,
-    food: 0,
-  });
+  const [wasteCategory, setWasteCategory] = useState<{ [key in WasteType]: number }>(
+    { plastic: 0, paper: 0, food: 0 }
+  );
 
   const handleSetUserId = (e: React.FormEvent) => {
     e.preventDefault();
     const form = e.target as HTMLFormElement;
     const newUserId = (form.userId as HTMLInputElement).value;
-    
+
     if (newUserId.trim()) {
       setUserId(newUserId);
       setIsUserIdLocked(true);
@@ -39,29 +37,32 @@ const GamePage = () => {
     const form = e.target as HTMLFormElement;
     const wasteType = (form.wasteType as HTMLSelectElement).value as WasteType;
     const weight = parseFloat((form.weight as HTMLInputElement).value);
-  
-    let pointsPerKg = wasteType === 'plastic' ? 10 : wasteType === 'paper' ? 8 : 5;
+
+    const pointsPerKg = wasteType === 'plastic' ? 10 : wasteType === 'paper' ? 8 : 5;
     const earnedPoints = Math.round(pointsPerKg * weight);
     const newTotalPoints = totalPoints + earnedPoints;
     const newTotalWeight = totalWeight + weight;
-  
+
     setTotalPoints(newTotalPoints);
     setTotalWeight(newTotalWeight);
-  
+
     setWasteCategory(prev => ({
       ...prev,
       [wasteType]: prev[wasteType] + weight,
     }));
-  
+
     const newBadges: string[] = [];
     if (newTotalPoints >= 500 && !badges.includes('Recycler 500')) newBadges.push('Recycler 500');
     if (newTotalWeight >= 100 && !badges.includes('Waste Warrior')) newBadges.push('Waste Warrior');
     setBadges(prev => [...prev, ...newBadges.filter(b => !prev.includes(b))]);
-  
+
     const cashReward = weight * 0.2;
-    setWalletBalance(prev => parseFloat((prev + cashReward).toFixed(2))); // Add RM based on weight
-  
-    setLog(prev => [`User ${userId}: ${wasteType} (${weight}kg) → +${earnedPoints} pts`, ...prev.slice(0, 4)]);
+    setWalletBalance(prev => parseFloat((prev + cashReward).toFixed(2)));
+
+    setLog(prev => [
+      `User ${userId}: ${wasteType} (${weight}kg) → +${earnedPoints} pts`,
+      ...prev.slice(0, 4),
+    ]);
     form.reset();
   };
 
@@ -69,13 +70,9 @@ const GamePage = () => {
     setIsUserIdLocked(false);
     setUserId('');
   };
-  
+
   const pointsProgress = Math.min((totalPoints / 500) * 100, 100);
   const weightProgress = Math.min((totalWeight / 100) * 100, 100);
-
-  // Add animation classes for elements
-  const fadeInAnimation = "animate-fade-in opacity-0";
-  const slideInAnimation = "transform transition duration-500 ease-in-out";
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-indigo-950">
@@ -88,8 +85,7 @@ const GamePage = () => {
             EcoChampion <span className="text-purple-500">Recycling Game</span>
           </h1>
         </div>
-
-        {userId && (
+          {userId && (
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4 mb-8 border-l-4 border-purple-500 flex items-center justify-between">
             <div className="flex items-center">
               <div className="bg-purple-100 dark:bg-purple-900 p-2 rounded-full mr-3">
@@ -330,7 +326,6 @@ const GamePage = () => {
 
 export default GamePage;
 
-
 interface QuizProps {
   onReward: () => void;
 }
@@ -347,6 +342,7 @@ const RecyclingQuiz = ({ onReward }: QuizProps) => {
     { question: "Which of these items can be composted?", options: ["Plastic bottles", "Food scraps", "Metal cans", "Glass jars"], correctAnswer: "Food scraps" },
     { question: "What is the recycling symbol for paper?", options: ["♻️", "📄", "🗑️", "📰"], correctAnswer: "♻️" },
     { question: "What is the best way to reduce waste?", options: ["Recycle", "Reuse", "Reduce", "All of the above"], correctAnswer: "All of the above" },
+  
   ];
 
   const [current, setCurrent] = useState(0);
@@ -358,7 +354,7 @@ const RecyclingQuiz = ({ onReward }: QuizProps) => {
     const isCorrect = selected === questions[current].correctAnswer;
     if (isCorrect) {
       setScore(prev => prev + 10);
-      onReward(); // Add RM0.10 to wallet
+      onReward();
     }
 
     setFeedback(isCorrect ? '✅ Correct!' : '❌ Wrong!');

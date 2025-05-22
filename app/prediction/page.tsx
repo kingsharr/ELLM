@@ -1,7 +1,7 @@
 'use client';
 
 import { FaChartLine } from "react-icons/fa";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import Papa from 'papaparse';
@@ -11,15 +11,12 @@ import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 
-// Fix default icon issue
+// Fix Leaflet icon issue
 L.Icon.Default.mergeOptions({
-  iconRetinaUrl: markerIcon2x,
-  iconUrl: markerIcon,
-  shadowUrl: markerShadow,
+  iconRetinaUrl: markerIcon2x.src || markerIcon2x,
+  iconUrl: markerIcon.src || markerIcon,
+  shadowUrl: markerShadow.src || markerShadow,
 });
-
-
-
 
 interface WasteData {
   Year: string;
@@ -33,49 +30,42 @@ interface WasteData {
 export default function PredictionPage() {
   const [data, setData] = useState<WasteData[]>([]);
   const [filteredCategory, setFilteredCategory] = useState<string>("All");
-  const [categories, setCategories] = useState<string[]>([]); // 👈 Dynamic categories
+  const [categories, setCategories] = useState<string[]>([]);
 
-  // Fetch CSV data
   useEffect(() => {
-    const fetchData = async () => {
+    async function fetchData() {
       try {
-        const response = await fetch("/data/waste_data_2028.csv"); // Place CSV in /public/data/
-        const csvText = await response.text();
+        const res = await fetch("/data/waste_data_2028.csv");
+        if (!res.ok) throw new Error("Failed to fetch CSV data");
+        const csvText = await res.text();
 
-        const parsedData = Papa.parse(csvText, { header: true, skipEmptyLines: true }).data;
-
-        const formattedData: WasteData[] = parsedData.map((row: any) => ({
-          Year: row.Year,
-          Category: row.Category,
-          Volume: parseFloat(row["Volume (kg)"]),
-          Location: row.Location,
-          lat: parseFloat(row.Latitude),
-          lng: parseFloat(row.Longitude),
+        const parsed = Papa.parse(csvText, { header: true, skipEmptyLines: true });
+        const formattedData: WasteData[] = parsed.data.map((row: any) => ({
+          Year: row.Year || "Unknown",
+          Category: row.Category || "Unknown",
+          Volume: parseFloat(row["Volume (kg)"]) || 0,
+          Location: row.Location || "Unknown",
+          lat: parseFloat(row.Latitude) || 0,
+          lng: parseFloat(row.Longitude) || 0,
         }));
 
-
         setData(formattedData);
-
-        // Extract unique categories
-        const categorySet = new Set(formattedData.map((row) => row.Category));
-        setCategories(["All", ...Array.from(categorySet)]);
+        setCategories(["All", ...Array.from(new Set(formattedData.map(d => d.Category)))]);
       } catch (error) {
-        console.error("Error fetching or parsing data:", error);
+        console.error("CSV fetch or parse error:", error);
       }
-    };
-
+    }
     fetchData();
   }, []);
 
-  // Filtered data
-  const filteredData = filteredCategory === "All" ? data : data.filter(item => item.Category === filteredCategory);
+  // Memoized filtered data
+  const filteredData = useMemo(() => {
+    if (filteredCategory === "All") return data;
+    return data.filter(item => item.Category === filteredCategory);
+  }, [filteredCategory, data]);
 
-  // Locations with high waste volume
-  const topWasteLocations = filteredData.filter(item => item.Volume > 100);
+  const topWasteLocations = useMemo(() => filteredData.filter(item => item.Volume > 100), [filteredData]);
 
-  
-
-  
   return (
     <section className="max-w-6xl mx-auto px-6 py-12">
       <div className="flex items-center gap-4 mb-8">
@@ -87,22 +77,19 @@ export default function PredictionPage() {
         Our predictive analytics dashboard helps municipalities optimize waste collection routes.
       </p>
 
-      {/* Category Filter */}
       <div className="mb-4">
         <select
           className="p-2 border rounded-md"
+          aria-label="Filter waste by category"
           value={filteredCategory}
           onChange={(e) => setFilteredCategory(e.target.value)}
         >
-          {categories.map((cat) => (
+          {categories.map(cat => (
             <option key={cat} value={cat}>{cat}</option>
           ))}
         </select>
       </div>
 
-      
-
-      {/* Graph Display */}
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-8">
         <ResponsiveContainer width="100%" height={300}>
           <LineChart data={filteredData}>
@@ -116,19 +103,18 @@ export default function PredictionPage() {
         </ResponsiveContainer>
       </div>
 
-        
-      {/* Map Display */}
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
         <MapContainer
-          center={[3.139, 101.6869]} // Center of Malaysia
+          center={[3.139, 101.6869]}
           zoom={6}
           style={{ height: "500px", width: "100%" }}
+          scrollWheelZoom={false}
         >
           <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-          {topWasteLocations.map((location, index) => (
-            <Marker key={index} position={[location.lat, location.lng]}>
+          {topWasteLocations.map((loc, idx) => (
+            <Marker key={idx} position={[loc.lat, loc.lng]}>
               <Popup>
-                {location.Location}: {location.Volume} kg
+                {loc.Location}: {loc.Volume} kg
               </Popup>
             </Marker>
           ))}
@@ -136,4 +122,4 @@ export default function PredictionPage() {
       </div>
     </section>
   );
-}  
+}

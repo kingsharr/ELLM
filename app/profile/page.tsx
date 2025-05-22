@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { FaUser, FaHistory, FaAward, FaCoins, FaEdit } from "react-icons/fa";
+import { FaUser, FaCoins } from "react-icons/fa";
 import { auth, db } from "../../services/firebase";
 import { 
   signInWithEmailAndPassword, 
@@ -11,7 +11,6 @@ import {
   User
 } from "firebase/auth";
 import { doc, getDoc, setDoc, DocumentData } from "firebase/firestore";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 export default function ProfilePage() {
@@ -24,57 +23,55 @@ export default function ProfilePage() {
   const [isSignup, setIsSignup] = useState(false);
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
-  const [user, setUser] = useState<User | null>(null); // Explicitly typed as User | null
+  const [user, setUser] = useState<User | null>(null);
   const [userData, setUserData] = useState<DocumentData | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    console.log("Component mounted");
-    
-    // Set up persistent auth state listener
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      console.log("Auth state changed:", currentUser ? `User: ${currentUser.uid}` : "No user");
       setUser(currentUser);
-      
+
       if (currentUser) {
         try {
-          await fetchUserData(currentUser.uid);
+          await fetchUserData(currentUser.uid, currentUser);
         } catch (error) {
           console.error("Error fetching user data:", error);
         }
+      } else {
+        setUserData(null);
+        setEmail("");
+        setFirstName("");
+        setLastName("");
       }
-      
+
       setLoading(false);
     });
-    
-    // Cleanup subscription on unmount
+
     return () => unsubscribe();
   }, []);
 
-  const fetchUserData = async (userId: string) => {
+  const fetchUserData = async (userId: string, user: User | null) => {
     try {
-      console.log("Fetching user data for:", userId);
       const docRef = doc(db, "users", userId);
       const docSnap = await getDoc(docRef);
-      
+
       if (docSnap.exists()) {
-        console.log("Document data:", docSnap.data());
         const data = docSnap.data();
         setUserData(data);
         setEmail(data.email || "");
         setFirstName(data.firstName || "");
         setLastName(data.lastName || "");
       } else {
-        console.log("No such document! Creating user profile...");
-        // Create a user document if it doesn't exist
+        // Create default user data if document doesn't exist
+        const names = user?.displayName?.split(" ") || ["", ""];
         const userData = {
-          firstName: user?.displayName?.split(' ')[0] || "",
-          lastName: user?.displayName?.split(' ')[1] || "",
+          firstName: names[0] || "",
+          lastName: names[1] || "",
           email: user?.email || "",
           points: 0,
-          createdAt: new Date().toISOString()
+          createdAt: new Date().toISOString(),
         };
-        
+
         await setDoc(doc(db, "users", userId), userData);
         setUserData(userData);
         setEmail(userData.email);
@@ -91,132 +88,102 @@ export default function ProfilePage() {
       setError("Email and password are required");
       return false;
     }
-    
+
     if (isSignup) {
       if (!firstName || !lastName) {
         setError("Please provide your first and last name");
         return false;
       }
-      
+
       if (password.length < 6) {
         setError("Password must be at least 6 characters long");
         return false;
       }
-      
+
       if (password !== confirmPassword) {
         setError("Passwords do not match");
         return false;
       }
     }
-    
+
     return true;
   };
 
   const handleAuth = async () => {
     setError("");
     setSuccessMessage("");
-    setLoading(true); // Ensure setLoading is used here
-    
-    if (!validateForm()) return;
+    setLoading(true);
+
+    if (!validateForm()) {
+      setLoading(false);  // <-- Important fix here
+      return;
+    }
 
     try {
-      // setLoading is already called at the start of handleAuth
-      
       if (isSignup) {
-        // Handle Signup
-        console.log("Creating user with email:", email);
-        
-        const userCredential = await createUserWithEmailAndPassword(
-          auth,
-          email,
-          password
-        );
-        
-        console.log("User created successfully:", userCredential.user.uid);
-        
-        // Create a user first, then after successful authentication add the data
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+
         const userData = {
           firstName,
           lastName,
           email,
           points: 0,
-          createdAt: new Date().toISOString(), // Using ISO string for better compatibility
+          createdAt: new Date().toISOString(),
         };
-        
-        // Ensure the "users" collection exists and add the document
-        console.log("Saving user data to Firestore...");
+
         try {
           await setDoc(doc(db, "users", userCredential.user.uid), userData);
-          console.log("User data saved to Firestore");
         } catch (firestoreError) {
-          console.error("Error saving to Firestore:", firestoreError);
           setError(`Error saving user data: ${(firestoreError as Error).message}`);
           setLoading(false);
           return;
         }
-        
+
         setSuccessMessage("Account created successfully!");
-        setLoading(false);
       } else {
-        // Handle Login
-        console.log("Logging in user with email:", email);
-        
-        const userCredential = await signInWithEmailAndPassword(
-          auth,
-          email,
-          password
-        );
-        
-        console.log("User logged in:", userCredential.user.uid);
-        
-        // User data will be fetched by the auth state listener
-        setLoading(false);
+        await signInWithEmailAndPassword(auth, email, password);
       }
     } catch (error) {
-      setLoading(false);
       if (error instanceof Error) {
-        console.error("Authentication error:", (error as any).code, error.message);
-        
-        // Handle specific Firebase auth errors with user-friendly messages
         switch ((error as any).code) {
-        case 'auth/email-already-in-use':
-          setError("This email is already registered. Please log in instead.");
-          break;
-        case 'auth/invalid-email':
-          setError("Please enter a valid email address.");
-          break;
-        case 'auth/weak-password':
-          setError("Password is too weak. Use at least 6 characters.");
-          break;
-        case 'auth/user-not-found':
-          setError("No account found with this email. Please sign up first.");
-          break;
-        case 'auth/wrong-password':
-          setError("Incorrect password. Please try again.");
-          break;
-        default:
+          case "auth/email-already-in-use":
+            setError("This email is already registered. Please log in instead.");
+            break;
+          case "auth/invalid-email":
+            setError("Please enter a valid email address.");
+            break;
+          case "auth/weak-password":
+            setError("Password is too weak. Use at least 6 characters.");
+            break;
+          case "auth/user-not-found":
+            setError("No account found with this email. Please sign up first.");
+            break;
+          case "auth/wrong-password":
+            setError("Incorrect password. Please try again.");
+            break;
+          default:
+            setError("Authentication failed. Please try again.");
         }
       } else {
-        console.error("An unknown error occurred:", error);
         setError("An unexpected error occurred. Please try again.");
       }
     }
+
+    setLoading(false);
   };
 
   const handleLogout = async () => {
     try {
       setLoading(true);
       await signOut(auth);
-      // The auth state listener will handle updating the UI
-      setLoading(false);
     } catch (error) {
-      setLoading(false);
       setError("Failed to log out. Please try again.");
-      console.error("Logout error:", error);
+      console.error(error);
     }
+    setLoading(false);
   };
 
-  if (loading === true) {
+  if (loading) {
     return (
       <div className="flex justify-center items-center h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>

@@ -1,4 +1,4 @@
-import { FaCamera, FaRecycle } from "react-icons/fa";
+import { FaCamera } from "react-icons/fa";
 import ImageUpload from "@/components/ImageUpload";
 
 export default function DetectionPage() {
@@ -15,5 +15,5 @@ export default function DetectionPage() {
         <ImageUpload />
       </div>
     </section>
-  )
+  );
 }

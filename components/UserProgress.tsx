@@ -8,12 +8,21 @@ export default function GamePage() {
   const [foodWeight, setFoodWeight] = useState(0);
   const [log, setLog] = useState<string[]>([]);
 
-  const handleScan = (e: React.FormEvent) => {
+  const handleScan: React.FormEventHandler<HTMLFormElement> = (e) => {
     e.preventDefault();
-    const form = e.target as HTMLFormElement;
+    const form = e.currentTarget;
     const wasteType = (form.wasteType as HTMLSelectElement).value;
     const weight = parseFloat((form.weight as HTMLInputElement).value);
-    const userId = (form.userId as HTMLInputElement).value;
+    const userId = (form.userId as HTMLInputElement).value.trim();
+
+    if (isNaN(weight) || weight <= 0) {
+      alert("Please enter a valid weight greater than 0.");
+      return;
+    }
+    if (!userId) {
+      alert("User ID cannot be empty.");
+      return;
+    }
 
     let pointsPerKg = 0;
     let updatedPlasticWeight = plasticWeight;
@@ -29,6 +38,9 @@ export default function GamePage() {
     } else if (wasteType === "food") {
       pointsPerKg = 5;
       updatedFoodWeight += weight;
+    } else {
+      alert("Please select a valid waste type.");
+      return;
     }
 
     const earnedPoints = Math.round(pointsPerKg * weight);
@@ -43,6 +55,7 @@ export default function GamePage() {
 
     form.reset();
   };
+
 
   return (
     <section className="max-w-6xl mx-auto px-6 py-12">
