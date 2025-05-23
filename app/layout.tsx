@@ -4,12 +4,16 @@ import { Inter } from 'next/font/google'
 import './globals.css'
 import { FaRecycle } from "react-icons/fa";
 import Link from "next/link";
+import { Analytics } from '@vercel/analytics/next';
 
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
   title: 'SmartWaste ELLM | AI-Powered Waste Management',
   description: 'Revolutionizing waste management through AI and LLM technology',
+  icons: {
+    icon: '/favicon.ico', 
+  },
 }
 
 export default function RootLayout({
@@ -92,6 +96,7 @@ export default function RootLayout({
             </div>
           </footer>
         </div>
+        <Analytics />
       </body>
     </html>
   )
