@@ -5,6 +5,7 @@ import './globals.css'
 import { FaRecycle } from "react-icons/fa";
 import Link from "next/link";
 import { Analytics } from '@vercel/analytics/next';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -97,6 +98,7 @@ export default function RootLayout({
           </footer>
         </div>
         <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   )
